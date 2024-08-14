@@ -1,6 +1,7 @@
 import 'package:flutter/material.dart';
+import 'package:omni/screens/home_screen.dart';
 
-import 'language_translation.dart';
+import '';
 
 void main() {
   runApp(const MyApp());
@@ -15,7 +16,7 @@ class MyApp extends StatelessWidget {
     return MaterialApp(
       title: 'Omni',
         debugShowCheckedModeBanner: false,
-      home:LanguageTranslation(),
+      home:HomeScreen(),
     );
   }
 }

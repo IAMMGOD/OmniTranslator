@@ -1,6 +1,6 @@
 import 'package:flutter/material.dart';
 import 'package:translator/translator.dart';
-import 'languages.dart';
+import '../languages.dart';
 
 class LanguageTranslation extends StatefulWidget {
   const LanguageTranslation({super.key});
