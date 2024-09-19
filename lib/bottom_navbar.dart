@@ -3,6 +3,7 @@ import 'package:omnitranslator/screens/flashcard_screen.dart';
 import 'package:omnitranslator/screens/settings_screen.dart';
 import 'package:omnitranslator/screens/translator_screen.dart';
 import 'package:omnitranslator/screens/home_screen.dart';
+import 'package:omnitranslator/providers/flashcard_provider.dart';
 
 class BottomNavBar extends StatefulWidget {
   @override
@@ -12,10 +13,11 @@ class BottomNavBar extends StatefulWidget {
 class _BottomNavBarState extends State<BottomNavBar> {
   int _currentIndex = 0;
 
+  // Use IndexedStack to retain state between tabs
   final List<Widget> _children = [
-    HomeScreen(favouriteText: '',),
+    HomeScreen(),
     LanguageTranslation(),
-    FlashcardsScreen(flashcards: [],),
+    FlashcardsScreen(),
     SettingsScreen(),
   ];
 
@@ -28,13 +30,17 @@ class _BottomNavBarState extends State<BottomNavBar> {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
-      body: _children[_currentIndex],
+      body: IndexedStack(
+        index: _currentIndex, // Show the currently selected screen
+        children: _children,
+      ),
       bottomNavigationBar: BottomNavigationBar(
-      onTap: _onItemTapped,
-      currentIndex: _currentIndex,
-      selectedItemColor: Colors.blue[900], // changed selected item text color to blue[900]
-      unselectedItemColor: Colors.blue[900],
-      items: [
+        onTap: _onItemTapped,
+        currentIndex: _currentIndex,
+        selectedItemColor: Colors.blue[900], // Selected item color
+        unselectedItemColor: Colors.grey,    // Unselected item color
+        type: BottomNavigationBarType.fixed, // Ensures all items are visible
+        items: const [
           BottomNavigationBarItem(
             icon: Icon(Icons.home),
             label: 'Home',

@@ -1,108 +1,12 @@
+//WHERE I WANT TO BE
 import 'package:flutter/material.dart';
+import 'package:omnitranslator/models/flashcard_model.dart';
+import 'package:omnitranslator/providers/flashcard_provider.dart';
+import 'package:omnitranslator/providers/flashcardpackage_provider.dart';
+import 'package:omnitranslator/providers/notes_provider.dart';
 import 'package:provider/provider.dart';
 
-import '../main.dart';
-
-class NoteProvider with ChangeNotifier {
-  List<String> notes = [];
-
-  void addNote(String note) {
-    notes.add(note);
-    notifyListeners();
-  }
-
-  void removeNote(int index) {
-    notes.removeAt(index);
-    notifyListeners();
-  }
-}
-
-void main() {
-  runApp(
-    MultiProvider(
-      providers: [
-        ChangeNotifierProvider<NoteProvider>(create: (_) => NoteProvider()),
-      ],
-      child: MyApp(),
-    ),
-  );
-}
-
-class HomeScreen extends StatefulWidget {
-  final String favouriteText;
-
-  HomeScreen({required this.favouriteText});
-
-  @override
-  _HomeScreenState createState() => _HomeScreenState();
-}
-
-class _HomeScreenState extends State<HomeScreen> {
-  // List to store notes
-  List<String> notes = [];
-
-  @override
-  void initState() {
-    super.initState();
-    // Add the favourite text to the list only if it's not empty
-    if (widget.favouriteText.isNotEmpty) {
-      notes.add(widget.favouriteText);
-    }
-  }
-
-
-  // Controller to handle text input
-  TextEditingController noteController = TextEditingController();
-
-  // Control whether the TextField is visible or not
-  bool isAddingNote = false;
-
-  // Word limit
-  final int wordLimit = 1000;
-
-  // Function to add a note
-  void addNote() {
-    String note = noteController.text.trim();
-    int wordCount = _getWordCount(note);
-
-    if (wordCount > wordLimit) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Cannot add note. Exceeded the 1000-word limit!'),
-          backgroundColor: Colors.red,
-        ),
-      );
-    } else {
-      setState(() {
-        notes.add(note); // Add the new note to the list
-        noteController.clear(); // Clear the input field after adding
-        isAddingNote = false; // Hide the TextField after adding the note
-      });
-    }
-  }
-
-  // Function to count words
-  int _getWordCount(String text) {
-    if (text.isEmpty) {
-      return 0;
-    }
-    return text.split(RegExp(r'\s+')).length; // Split by whitespace to count words
-  }
-
-  // Function to delete a note
-  void deleteNoteAtIndex(int index) {
-    setState(() {
-      notes.removeAt(index); // Remove the note from the list
-    });
-  }
-
-  // Function to toggle the visibility of the TextField
-  void toggleAddNote() {
-    setState(() {
-      isAddingNote = !isAddingNote; // Toggle the visibility
-    });
-  }
-
+class HomeScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return Scaffold(
@@ -111,77 +15,161 @@ class _HomeScreenState extends State<HomeScreen> {
         backgroundColor: Colors.blue[900],
       ),
       backgroundColor: Colors.blue[900],
-      body: Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          children: [
-            // Conditionally show the TextField only when `isAddingNote` is true
-            if (isAddingNote)
-              Column(
-                children: [
-                  TextField(
-                    controller: noteController,
-                    style: TextStyle(color: Colors.white),
-                    maxLines: null, // Allow multiple lines
-                    decoration: InputDecoration(
-                      labelText: 'Enter a note',
-                      labelStyle: TextStyle(color: Colors.white),
-                      enabledBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                      focusedBorder: OutlineInputBorder(
-                        borderSide: BorderSide(color: Colors.white),
-                      ),
-                    ),
-                  ),
-                  SizedBox(height: 10),
-
-                  // Button to save the note
-                  ElevatedButton(
-                    onPressed: addNote, // Calls the function to add a note
-                    style: ElevatedButton.styleFrom(backgroundColor: Colors.white),
-                    child: Text('Save Note', style: TextStyle(color: Colors.blue[900])),
-                  ),
-                ],
-              ),
-
-            SizedBox(height: 20),
-
-            // Expanded ListView to show notes
-            Expanded(
-              child: notes.isEmpty
-                  ? Center(
-                child: Text(
-                  'No notes yet!',
-                  style: TextStyle(color: Colors.white),
-                ),
-              )
-                  : ListView.builder(
-                itemCount: notes.length,
-                itemBuilder: (context, index) {
-                  return ListTile(
-                    title: Text(
-                      notes[index],
+      body: Consumer2<NotesProvider, FlashcardProvider>(
+        builder: (context, notesProvider, flashcardProvider, child) {
+          return Padding(
+            padding: const EdgeInsets.all(16.0),
+            child: Column(
+              children: [
+                Expanded(
+                  child: notesProvider.notes.isEmpty
+                      ? Center(
+                    child: Text(
+                      'No notes yet!',
                       style: TextStyle(color: Colors.white),
                     ),
-                    trailing: IconButton(
-                      icon: Icon(Icons.delete, color: Colors.red),
-                      onPressed: () => deleteNoteAtIndex(index), // Delete the note
-                    ),
-                  );
-                },
-              ),
+                  )
+                      : ListView.builder(
+                    itemCount: notesProvider.notes.length,
+                    itemBuilder: (context, index) {
+                      String note = notesProvider.notes[index];
+                      return ListTile(
+                        title: Text(
+                          note,
+                          style: TextStyle(color: Colors.white),
+                        ),
+                        trailing: PopupMenuButton<String>(
+                          onSelected: (String value) {
+                            Flashcard newFlashcard = Flashcard(
+                              frontSide: note,
+                              backSide: 'Translation here', // Replace with actual logic
+                            );
+                            flashcardProvider.addFlashcardToPackage(newFlashcard, value);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              SnackBar(
+                                content: Text('Flashcard added to $value!'),
+                                backgroundColor: Colors.green,
+                              ),
+                            );
+                          },
+                          itemBuilder: (BuildContext context) {
+                            // Create a list of existing packages
+                            return flashcardProvider.flashcardPackages.map((package) {
+                              return PopupMenuItem<String>(
+                                value: package.name,
+                                child: Text('Add to ${package.name}'),
+                              );
+                            }).toList();
+                          },
+                        ),
+                      );
+                    },
+                  ),
+                ),
+              ],
             ),
-          ],
-        ),
+          );
+        },
       ),
-      // FloatingActionButton to show the TextField for adding a new note
-      floatingActionButton: FloatingActionButton(
-        onPressed: toggleAddNote, // Toggles the TextField visibility
-        child: Icon(Icons.add),
-        backgroundColor: Colors.white,
-        foregroundColor: Colors.blue[900],
+      floatingActionButton: Column(
+        mainAxisAlignment: MainAxisAlignment.end,
+        children: [
+          FloatingActionButton(
+            onPressed: () => _showAddNoteDialog(context),
+            child: Icon(Icons.book),
+            backgroundColor: Colors.white,
+            heroTag: null,
+          ),
+          SizedBox(height: 16),
+          FloatingActionButton(
+            onPressed: () => _showCreatePackageDialog(context),
+            child: Icon(Icons.folder),
+            backgroundColor: Colors.white,
+            heroTag: null,
+          ),
+        ],
       ),
     );
   }
+
+  // Show a dialog to create a new note
+  void _showAddNoteDialog(BuildContext context) {
+    final TextEditingController _noteController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Add New Note'),
+          content: TextField(
+            controller: _noteController,
+            decoration: InputDecoration(hintText: 'Enter your note'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String note = _noteController.text.trim();
+                if (note.isNotEmpty) {
+                  context.read<NotesProvider>().addNote(note);
+                  Navigator.pop(context);
+                }
+              },
+              child: Text('Add'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
+
+  // Show a dialog to create a new flashcard package
+  void _showCreatePackageDialog(BuildContext context) {
+    final TextEditingController _packageNameController = TextEditingController();
+
+    showDialog(
+      context: context,
+      builder: (context) {
+        return AlertDialog(
+          title: Text('Create New Flashcard Package'),
+          content: TextField(
+            controller: _packageNameController,
+            decoration: InputDecoration(hintText: 'Enter package name'),
+          ),
+          actions: [
+            TextButton(
+              onPressed: () {
+                String packageName = _packageNameController.text.trim();
+                if (packageName.isNotEmpty) {
+                  FlashcardPackage newPackage = FlashcardPackage(name: packageName, flashcards: []);
+                  context.read<FlashcardProvider>().addFlashcardPackage(newPackage);
+
+                  Navigator.pop(context);
+
+                  ScaffoldMessenger.of(context).showSnackBar(
+                    SnackBar(
+                      content: Text('Flashcard package $packageName created!'),
+                      backgroundColor: Colors.green,
+                    ),
+                  );
+                }
+              },
+              child: Text('Create'),
+            ),
+            TextButton(
+              onPressed: () => Navigator.pop(context),
+              child: Text('Cancel'),
+            ),
+          ],
+        );
+      },
+    );
+  }
 }
+
+
+

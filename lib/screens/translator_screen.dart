@@ -1,8 +1,8 @@
 import 'package:flutter/material.dart';
 import 'package:translator/translator.dart';
 import 'package:omnitranslator/translator_speciics/languages.dart';
-
-import 'home_screen.dart';
+import 'package:omnitranslator/providers/notes_provider.dart';
+import 'package:provider/provider.dart';
 
 class LanguageTranslation extends StatefulWidget {
   const LanguageTranslation({super.key});
@@ -26,26 +26,13 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
       });
     } catch (e) {
       setState(() {
-        output = "Failed to translate: $e ";
+        output = "Failed to translate: $e";
       });
       print("Translation error: $e"); // Log the error for debugging
       print("Source language code: $src");
       print("Destination language code: $dest");
     }
   }
-
-  // String getLanguageCode(String language) {
-  //   switch (language) {
-  //     case "English":
-  //       return "en";
-  //     case "Chinese":
-  //       return "zh";
-  //     case "Spanish":
-  //       return "es";
-  //     default:
-  //       return "--";
-  //   }
-  // }
 
   @override
   Widget build(BuildContext context) {
@@ -72,7 +59,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
               children: [
                 // Source Language Dropdown
                 Expanded(
-                  flex: 1, // Add flex: 1 to prevent overflow
+                  flex: 1,
                   child: DropdownButtonFormField<String>(
                     value: originalLanguage,
                     onChanged: (String? value) {
@@ -90,8 +77,8 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                       fillColor: Colors.grey[200],
                     ),
                     items: [
-                      DropdownMenuItem(
-                        value: "Select a language" ,
+                      const DropdownMenuItem(
+                        value: "Select a language",
                         child: Text("Select a language"),
                       ),
                       ...languages.map((String language) {
@@ -104,7 +91,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                   ),
                 ),
                 IconButton(
-                  icon: Icon(Icons.swap_horiz, color: Colors.blue),
+                  icon: const Icon(Icons.swap_horiz, color: Colors.blue),
                   onPressed: () {
                     setState(() {
                       var temp = originalLanguage;
@@ -115,7 +102,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                 ),
                 // Destination Language Dropdown
                 Expanded(
-                  flex: 1, // Add flex: 1 to prevent overflow
+                  flex: 1,
                   child: DropdownButtonFormField<String>(
                     value: destinationLanguage,
                     onChanged: (String? value) {
@@ -133,7 +120,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                       fillColor: Colors.grey[200],
                     ),
                     items: [
-                      DropdownMenuItem(
+                      const DropdownMenuItem(
                         value: "Select a language",
                         child: Text("Select a language"),
                       ),
@@ -162,7 +149,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                 controller: languageController,
                 maxLines: 5,
                 cursorColor: Colors.black,
-                decoration: InputDecoration.collapsed(
+                decoration: const InputDecoration.collapsed(
                   hintText: 'Enter text to translate...',
                 ),
               ),
@@ -194,8 +181,7 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
               ),
               child: const Text(
                 "Translate",
-                style: TextStyle(fontSize: 16,
-                    color: Colors.black),
+                style: TextStyle(fontSize: 16, color: Colors.black),
               ),
             ),
 
@@ -225,19 +211,22 @@ class _LanguageTranslationState extends State<LanguageTranslation> {
                     Align(
                       alignment: Alignment.bottomRight,
                       child: IconButton(
-                        icon: Icon(Icons.star_border),
+                        icon: const Icon(Icons.star_border),
                         onPressed: () {
                           if (output.isNotEmpty) {
-                            Navigator.push(
-                              context,
-                              MaterialPageRoute(
-                                builder: (context) => HomeScreen(favouriteText: output),
+                            Provider.of<NotesProvider>(context, listen: false)
+                                .addNote(output);
+
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text('Translation added to notes!'),
+                                backgroundColor: Colors.green,
                               ),
                             );
                           } else {
                             ScaffoldMessenger.of(context).showSnackBar(
-                              SnackBar(
-                                content: Text('No text to save'),
+                              const SnackBar(
+                                content: Text('Nothing to add! Translate something first.'),
                                 backgroundColor: Colors.red,
                               ),
                             );
